@@ -1,6 +1,6 @@
 {
   "name": "@rsids/shpts",
-  "version": "1.0.0",
+  "version": "5.0.0",
   "description": "A binary shapefile loader, for javascript, written in typescript. Not many caveats",
   "repository": {
     "type": "git",
