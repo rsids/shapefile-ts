@@ -1,9 +1,11 @@
 module.exports = {
+  root:true,
   env: {
     browser: true,
-    node: true,
     es6: true,
     mocha: true
   },
-  extends: 'semistandard'
+  extends: ["eslint:recommended", 'plugin:@typescript-eslint/recommended', "prettier"],
+  plugins: [
+    '@typescript-eslint','prettier']
 };

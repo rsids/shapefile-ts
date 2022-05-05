@@ -1,6 +1,4 @@
-const URL = global.URL;
-
-module.exports = (base, type) => {
+const combine = (base: string, type?: string): string => {
   if (!type) {
     return base;
   }
@@ -8,3 +6,5 @@ module.exports = (base, type) => {
   url.pathname = `${url.pathname}.${type}`;
   return url.href;
 };
+
+export default combine;
