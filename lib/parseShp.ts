@@ -46,7 +46,7 @@ enum shpFuncObj {
 }
 
 function makeParseCoord(
-  converter: Converter
+  converter?: Converter
 ): (data: Buffer, offset: number) => number[] {
   if (converter) {
     return function (data, offset) {
@@ -91,7 +91,7 @@ class ParseShp {
     this.rows = this.getRows();
   }
 
-  shpFunctions(converter: Converter) {
+  shpFunctions(converter?: Converter) {
     let num = this.headers.shpCode;
     if (num > 20) {
       num -= 20;
