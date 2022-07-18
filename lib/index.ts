@@ -1,7 +1,7 @@
 import { Buffer } from "buffer";
 import { FeatureCollection, Geometry } from "geojson";
 import Cache from "lru-cache";
-import * as parseDbfLib from "parsedbf";
+import * as parseDbfLib from "parseDbf";
 import { Converter } from "proj4";
 import * as proj4_lib from "proj4";
 import binaryAjax from "./binaryajax";
