@@ -136,6 +136,7 @@ const parseZip = async (
       }
       parsed = combine([
         parseShpLib(zip[name + ".shp"] as Buffer, converter),
+
         dbf,
       ]);
       // parsed.fileName = name;
