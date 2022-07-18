@@ -118,7 +118,7 @@ const parseZip = async (
       let converter: Converter | undefined;
       if (zip[name + ".prj"]) {
         converter = zip[name + ".prj"] as Converter;
-        if (!isSameProjection(targetProjection, converter)) {
+        if (!isDifferentProjection(targetProjection, converter)) {
           converter = undefined;
         }
       }
@@ -216,7 +216,7 @@ const parseDbf = (dbf: Buffer, cpg: string) => {
   return parseDbfLib(dbf, cpg);
 };
 
-function isSameProjection(
+function isDifferentProjection(
   targetProjection: string,
   sourceProjection: Converter
 ): boolean {
