@@ -1,1 +1,1 @@
-declare module "parseDbf";
+declare module "parsedbf";
