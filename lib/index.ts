@@ -111,10 +111,6 @@ const parseZip = async (
     const lastDotIdx = name.lastIndexOf(".");
     if (lastDotIdx > -1 && name.slice(lastDotIdx).indexOf("json") > -1) {
       parsed = JSON.parse(zip[name] as string);
-      // parsed.fileName = name.slice(0, lastDotIdx);
-      // } else if (whiteList.includes(name.slice(lastDotIdx + 1))) {
-      //   parsed = zip[name];
-      //   parsed.fileName = name;
     } else {
       if (zip[name + ".dbf"]) {
         dbf = parseDbfLib(zip[name + ".dbf"], zip[name + ".cpg"]);
@@ -125,21 +121,11 @@ const parseZip = async (
         if (!isSameProjection(targetProjection, converter)) {
           converter = undefined;
         }
-        const target = proj4.defs(targetProjection);
-        const source = proj4.defs("sourceProjection");
-
-        ["lat0", "long0", "k0", "x0", "y0", "units"].forEach((prop) => {
-          if (target[prop] !== source[prop]) {
-            converter = undefined;
-          }
-        });
       }
       parsed = combine([
         parseShpLib(zip[name + ".shp"] as Buffer, converter),
-
         dbf,
       ]);
-      // parsed.fileName = name;
     }
     return parsed;
   });
