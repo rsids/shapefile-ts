@@ -49,16 +49,16 @@ function makeParseCoord(
   converter?: Converter
 ): (data: Buffer, offset: number) => number[] {
   if (converter) {
-    return function (data, offset) {
-      return converter.inverse([
+    return (data, offset) =>
+      converter.inverse([
         data.readDoubleLE(offset),
         data.readDoubleLE(offset + 8),
       ]);
-    };
   } else {
-    return function (data, offset) {
-      return [data.readDoubleLE(offset), data.readDoubleLE(offset + 8)];
-    };
+    return (data, offset) => [
+      data.readDoubleLE(offset),
+      data.readDoubleLE(offset + 8),
+    ];
   }
 }
 

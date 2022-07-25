@@ -2,8 +2,8 @@ import { Buffer } from "buffer";
 import { FeatureCollection, Geometry } from "geojson";
 import Cache from "lru-cache";
 import * as parseDbfLib from "parsedbf";
-import { Converter } from "proj4";
 import * as proj4_lib from "proj4";
+import { Converter } from "proj4";
 import binaryAjax from "./binaryajax";
 import { parseShp as parseShpLib } from "./parseShp";
 import unzip from "./unzip";
@@ -33,17 +33,20 @@ function toBuffer(b?: Buffer | ArrayBuffer | Uint8Array): Buffer {
 function shp(
   base: string | ArrayBuffer,
   whiteList: string[],
+  sourceProjection = "EPSG:4326",
   targetProjection = "EPSG:4326"
 ): Promise<FeatureCollection | FeatureCollection[]> {
   if (typeof base === "string" && cache.has(base)) {
     return Promise.resolve(cache.get(base));
   }
-  return getShapefile(base, targetProjection, whiteList).then(function (resp) {
-    if (typeof base === "string") {
-      cache.set(base, resp);
+  return getShapefile(base, sourceProjection, targetProjection, whiteList).then(
+    function (resp) {
+      if (typeof base === "string") {
+        cache.set(base, resp);
+      }
+      return resp;
     }
-    return resp;
-  });
+  );
 }
 interface Dbf {
   [x: string]: any;
@@ -73,6 +76,7 @@ const combine = ([shp, dbf]: [
 };
 const parseZip = async (
   buffer: ArrayBuffer,
+  sourceProjection: string,
   targetProjection: string,
   whiteList?: string[]
 ): Promise<FeatureCollection | FeatureCollection[]> => {
@@ -118,7 +122,7 @@ const parseZip = async (
       let converter: Converter | undefined;
       if (zip[name + ".prj"]) {
         converter = zip[name + ".prj"] as Converter;
-        if (!isDifferentProjection(targetProjection, converter)) {
+        if (sourceProjection === targetProjection) {
           converter = undefined;
         }
       }
@@ -138,27 +142,32 @@ const parseZip = async (
 
 async function getZip(
   base: string,
+  sourceProjection: string,
   targetProjection: string,
   whiteList?: string[]
 ): Promise<FeatureCollection | FeatureCollection[]> {
   const a = await binaryAjax(base);
-  return parseZip(a as Buffer, targetProjection, whiteList);
+  return parseZip(a as Buffer, sourceProjection, targetProjection, whiteList);
 }
 
-const handleShp = async (base: string, targetProjection: string) => {
-  const args = await Promise.all([
+const handleShp = async (
+  base: string,
+  sourceprojection: string,
+  targetProjection: string
+) => {
+  const [buffer, projection] = await Promise.all([
     binaryAjax(base, "shp"),
     binaryAjax(base, "prj"),
   ]);
   let converter: Converter | undefined;
   try {
-    if (args[1]) {
-      converter = proj4(args[1]);
+    if (sourceprojection !== targetProjection && projection) {
+      converter = proj4(projection);
     }
   } catch (e) {
     // Failed to reproject
   }
-  return parseShpLib(args[0] as Buffer, converter);
+  return parseShpLib(buffer as Buffer, converter);
 };
 
 const handleDbf = async (base: string) => {
@@ -179,17 +188,18 @@ const checkSuffix = (base: string, suffix: string): boolean => {
 
 const getShapefile = async (
   base: string | ArrayBuffer,
+  sourceProjection: string,
   targetProjection: string,
   whiteList?: string[]
 ): Promise<FeatureCollection | FeatureCollection[]> => {
   if (typeof base !== "string") {
-    return parseZip(base, targetProjection);
+    return parseZip(base, sourceProjection, targetProjection);
   }
   if (checkSuffix(base, ".zip")) {
-    return getZip(base, undefined, whiteList);
+    return getZip(base, sourceProjection, targetProjection, whiteList);
   }
   const results = await Promise.all([
-    handleShp(base, targetProjection),
+    handleShp(base, sourceProjection, targetProjection),
     handleDbf(base),
   ]);
   return combine(results);
@@ -215,18 +225,5 @@ const parseDbf = (dbf: Buffer, cpg: string) => {
   dbf = toBuffer(dbf);
   return parseDbfLib(dbf, cpg);
 };
-
-function isDifferentProjection(
-  targetProjection: string,
-  sourceProjection: Converter
-): boolean {
-  proj4.defs("sourceProjection", sourceProjection);
-  const target = proj4.defs(targetProjection);
-  const source = proj4.defs("sourceProjection");
-
-  return ["lat0", "long0", "k0", "x0", "y0", "units"]
-    .map((prop) => target[prop] === source[prop])
-    .includes(false);
-}
 
 export { combine, getShapefile, parseShp, parseDbf, shp };
